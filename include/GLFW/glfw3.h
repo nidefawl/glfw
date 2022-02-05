@@ -189,10 +189,12 @@ extern "C" {
 
  #else /*__APPLE__*/
 
+//BEGIN EDIT
   #include <GL/glcorearb.h>
   #if defined(GLFW_INCLUDE_GLEXT)
    #include <GL/glext.h>
   #endif
+//END EDIT
 
  #endif /*__APPLE__*/
 
@@ -242,7 +244,10 @@ extern "C" {
   #if defined(GLFW_INCLUDE_GLEXT)
    #include <GL/glext.h>
   #endif
-
+  #if defined(GLFW_APIENTRY_DEFINED)
+   #undef APIENTRY
+   #undef GLFW_APIENTRY_DEFINED
+  #endif
  #endif /*__APPLE__*/
 
 #endif /* OpenGL and OpenGL ES headers */
@@ -6396,6 +6401,9 @@ GLFWAPI VkResult glfwCreateWindowSurface(VkInstance instance, GLFWwindow* window
 
 #endif /*VK_VERSION_1_0*/
 
+
+GLFWAPI GLFWwindow* glfwCreateChildWindow(void* parent, int width, int height, const char* title, GLFWwindow* shareContext);
+GLFWAPI int glfwIsContextPresent(void);
 
 /*************************************************************************
  * Global definition cleanup

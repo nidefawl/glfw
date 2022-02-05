@@ -43,7 +43,9 @@ static DWORD getWindowStyle(const _GLFWwindow* window)
 {
     DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
-    if (window->monitor)
+ 	  if (window->isChild)
+   		style = WS_CHILD;
+    else if (window->monitor)
         style |= WS_POPUP;
     else
     {
@@ -1247,6 +1249,18 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
+#if defined(_GLFW_WNDCLASSNAME)
+const WCHAR* glfwWin32WindowClassName = _GLFW_WNDCLASSNAME;
+#else
+const WCHAR* glfwWin32WindowClassName = L"GLFW30";
+#endif
+
+GLFWAPI void glfwSetWin32WindowClassName(const WCHAR* windowClassName) {
+    if (_glfw.initialized)
+        return;
+    glfwWin32WindowClassName = windowClassName;
+}
+
 // Creates the GLFW window
 //
 static int createNativeWindow(_GLFWwindow* window,
@@ -1257,6 +1271,36 @@ static int createNativeWindow(_GLFWwindow* window,
     WCHAR* wideTitle;
     DWORD style = getWindowStyle(window);
     DWORD exStyle = getWindowExStyle(window);
+    HWND parentHwnd = NULL;
+
+    if (!_glfw.win32.mainWindowClass)
+    {
+        WNDCLASSEXW wc = { sizeof(wc) };
+        wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        wc.lpfnWndProc   = windowProc;
+        wc.hInstance     = _glfw.win32.instance;
+        wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
+        wc.lpszClassName = glfwWin32WindowClassName;
+        // Load user-provided icon if available
+        wc.hIcon = LoadImageW(GetModuleHandleW(NULL),
+                              L"GLFW_ICON", IMAGE_ICON,
+                              0, 0, LR_DEFAULTSIZE | LR_SHARED);
+        if (!wc.hIcon)
+        {
+            // No user-provided icon found, load default icon
+            wc.hIcon = LoadImageW(NULL,
+                                  IDI_APPLICATION, IMAGE_ICON,
+                                  0, 0, LR_DEFAULTSIZE | LR_SHARED);
+        }
+
+        _glfw.win32.mainWindowClass = RegisterClassExW(&wc);
+        if (!_glfw.win32.mainWindowClass)
+        {
+            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
+                                 "Win32: Failed to register window class");
+            return GLFW_FALSE;
+        }
+    }
 
     if (!_glfw.win32.mainWindowClass)
     {
@@ -1332,14 +1376,16 @@ static int createNativeWindow(_GLFWwindow* window,
     wideTitle = _glfwCreateWideStringFromUTF8Win32(wndconfig->title);
     if (!wideTitle)
         return GLFW_FALSE;
-
+    if (wndconfig->parentHandle) {
+        parentHwnd = (HWND) wndconfig->parentHandle;
+    }
     window->win32.handle = CreateWindowExW(exStyle,
                                            MAKEINTATOM(_glfw.win32.mainWindowClass),
                                            wideTitle,
                                            style,
                                            frameX, frameY,
                                            frameWidth, frameHeight,
-                                           NULL, // No parent window
+                                           parentHwnd,
                                            NULL, // No window menu
                                            _glfw.win32.instance,
                                            (LPVOID) wndconfig);
@@ -1355,7 +1401,7 @@ static int createNativeWindow(_GLFWwindow* window,
 
     SetPropW(window->win32.handle, L"GLFW", window);
 
-    if (IsWindows7OrGreater())
+    /*if (IsWindows7OrGreater())
     {
         ChangeWindowMessageFilterEx(window->win32.handle,
                                     WM_DROPFILES, MSGFLT_ALLOW, NULL);
@@ -1363,7 +1409,7 @@ static int createNativeWindow(_GLFWwindow* window,
                                     WM_COPYDATA, MSGFLT_ALLOW, NULL);
         ChangeWindowMessageFilterEx(window->win32.handle,
                                     WM_COPYGLOBALDATA, MSGFLT_ALLOW, NULL);
-    }
+    }*/
 
     window->win32.scaleToMonitor = wndconfig->scaleToMonitor;
     window->win32.keymenu = wndconfig->win32.keymenu;
@@ -1426,7 +1472,7 @@ static int createNativeWindow(_GLFWwindow* window,
         }
     }
 
-    DragAcceptFiles(window->win32.handle, TRUE);
+    // DragAcceptFiles(window->win32.handle, TRUE);
 
     if (fbconfig->transparent)
     {
@@ -1881,7 +1927,7 @@ void _glfwSetWindowMonitorWin32(_GLFWwindow* window,
 
 GLFWbool _glfwWindowFocusedWin32(_GLFWwindow* window)
 {
-    return window->win32.handle == GetActiveWindow();
+    return window->isChild || window->win32.handle == GetActiveWindow();
 }
 
 GLFWbool _glfwWindowIconifiedWin32(_GLFWwindow* window)
@@ -2030,10 +2076,11 @@ GLFWbool _glfwRawMouseMotionSupportedWin32(void)
     return GLFW_TRUE;
 }
 
+GLFWAPI void glfwUpdateWin32Internals(void);
+
 void _glfwPollEventsWin32(void)
 {
     MSG msg;
-    HWND handle;
     _GLFWwindow* window;
 
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
@@ -2057,6 +2104,14 @@ void _glfwPollEventsWin32(void)
             DispatchMessageW(&msg);
         }
     }
+
+  glfwUpdateWin32Internals();
+}
+
+GLFWAPI void glfwUpdateWin32Internals(void)
+{
+    HWND handle;
+    _GLFWwindow* window;
 
     // HACK: Release modifier keys that the system did not emit KEYUP for
     // NOTE: Shift keys on Windows tend to "stick" when both are pressed as
@@ -2160,7 +2215,7 @@ void _glfwSetCursorPosWin32(_GLFWwindow* window, double xpos, double ypos)
 
 void _glfwSetCursorModeWin32(_GLFWwindow* window, int mode)
 {
-    if (_glfwWindowFocusedWin32(window))
+    if (window->isAlwaysFocused || _glfwWindowFocusedWin32(window))
     {
         if (mode == GLFW_CURSOR_DISABLED)
         {

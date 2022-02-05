@@ -220,6 +220,11 @@ GLFWAPI const char* glfwGetWin32Monitor(GLFWmonitor* monitor);
  *  @ingroup native
  */
 GLFWAPI HWND glfwGetWin32Window(GLFWwindow* window);
+
+GLFWAPI void glfwSetWin32WindowClassName(const WCHAR* windowClassName);
+
+GLFWAPI void glfwUpdateWin32Internals(void);
+
 #endif
 
 #if defined(GLFW_EXPOSE_NATIVE_WGL)

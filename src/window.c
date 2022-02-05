@@ -178,15 +178,15 @@ void _glfwInputWindowMonitor(_GLFWwindow* window, _GLFWmonitor* monitor)
 //////////////////////////////////////////////////////////////////////////
 //////                        GLFW public API                       //////
 //////////////////////////////////////////////////////////////////////////
-
-GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
+GLFWAPI GLFWwindow* glfwCreateWindowWithConfig(int width, int height,
                                      const char* title,
                                      GLFWmonitor* monitor,
-                                     GLFWwindow* share)
+                                     GLFWwindow* share,
+                                     _GLFWwndconfig* pWndconfig)
 {
     _GLFWfbconfig fbconfig;
     _GLFWctxconfig ctxconfig;
-    _GLFWwndconfig wndconfig;
+    _GLFWwndconfig wndconfig = *pWndconfig;
     _GLFWwindow* window;
 
     assert(title != NULL);
@@ -206,12 +206,21 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
 
     fbconfig  = _glfw.hints.framebuffer;
     ctxconfig = _glfw.hints.context;
-    wndconfig = _glfw.hints.window;
 
     wndconfig.width   = width;
     wndconfig.height  = height;
     wndconfig.title   = title;
     ctxconfig.share   = (_GLFWwindow*) share;
+
+    if (ctxconfig.share)
+    {
+        if (ctxconfig.client == GLFW_NO_API ||
+            ctxconfig.share->context.client == GLFW_NO_API)
+        {
+            _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
+            return NULL;
+        }
+    }
 
     if (!_glfwIsValidContextConfig(&ctxconfig))
         return NULL;
@@ -235,6 +244,8 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
     window->focusOnShow      = wndconfig.focusOnShow;
     window->mousePassthrough = wndconfig.mousePassthrough;
     window->cursorMode       = GLFW_CURSOR_NORMAL;
+    window->isChild = wndconfig.parentHandle != NULL;
+    window->isAlwaysFocused = GLFW_TRUE;
 
     window->doublebuffer = fbconfig.doublebuffer;
 
@@ -253,7 +264,25 @@ GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
 
     return (GLFWwindow*) window;
 }
-
+GLFWAPI GLFWwindow* glfwCreateWindow(int width, int height,
+                                     const char* title,
+                                     GLFWmonitor* monitor,
+                                     GLFWwindow* share)
+{
+    _GLFWwndconfig wndconfig;
+    wndconfig = _glfw.hints.window;
+    return glfwCreateWindowWithConfig(width, height, title, monitor, share, &wndconfig);
+}
+GLFWAPI GLFWwindow* glfwCreateChildWindow(void* parentWindowHandle, 
+                                            int width, int height,
+                                            const char* title, 
+                                            GLFWwindow* shareContext)
+{
+    _GLFWwndconfig wndconfig;
+    wndconfig = _glfw.hints.window;
+    wndconfig.parentHandle = parentWindowHandle;
+    return glfwCreateWindowWithConfig(width, height, title, NULL, shareContext, &wndconfig);
+}
 void glfwDefaultWindowHints(void)
 {
     _GLFW_REQUIRE_INIT();

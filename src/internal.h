@@ -422,6 +422,8 @@ struct _GLFWwndconfig
     struct {
         char      appId[256];
     } wl;
+
+    void* parentHandle;
 };
 
 // Context configuration
@@ -537,6 +539,8 @@ struct _GLFWwindow
     GLFWvidmode         videoMode;
     _GLFWmonitor*       monitor;
     _GLFWcursor*        cursor;
+    GLFWbool            isChild;
+    GLFWbool            isAlwaysFocused;
 
     int                 minwidth, minheight;
     int                 maxwidth, maxheight;

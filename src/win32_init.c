@@ -683,6 +683,10 @@ GLFWbool _glfwConnectWin32(int platformID, _GLFWplatform* platform)
     return GLFW_TRUE;
 }
 
+GLFWAPI void glfwSetWin32WindowClassName(const WCHAR* windowClassName) {
+  _glfw.win32.windowClassName = windowClassName;
+}
+
 int _glfwInitWin32(void)
 {
     if (!loadLibraries())
