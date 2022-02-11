@@ -1302,39 +1302,6 @@ static int createNativeWindow(_GLFWwindow* window,
         }
     }
 
-    if (!_glfw.win32.mainWindowClass)
-    {
-        WNDCLASSEXW wc = { sizeof(wc) };
-        wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-        wc.lpfnWndProc   = windowProc;
-        wc.hInstance     = _glfw.win32.instance;
-        wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
-#if defined(_GLFW_WNDCLASSNAME)
-        wc.lpszClassName = _GLFW_WNDCLASSNAME;
-#else
-        wc.lpszClassName = L"GLFW30";
-#endif
-        // Load user-provided icon if available
-        wc.hIcon = LoadImageW(GetModuleHandleW(NULL),
-                              L"GLFW_ICON", IMAGE_ICON,
-                              0, 0, LR_DEFAULTSIZE | LR_SHARED);
-        if (!wc.hIcon)
-        {
-            // No user-provided icon found, load default icon
-            wc.hIcon = LoadImageW(NULL,
-                                  IDI_APPLICATION, IMAGE_ICON,
-                                  0, 0, LR_DEFAULTSIZE | LR_SHARED);
-        }
-
-        _glfw.win32.mainWindowClass = RegisterClassExW(&wc);
-        if (!_glfw.win32.mainWindowClass)
-        {
-            _glfwInputErrorWin32(GLFW_PLATFORM_ERROR,
-                                 "Win32: Failed to register window class");
-            return GLFW_FALSE;
-        }
-    }
-
     if (window->monitor)
     {
         MONITORINFO mi = { sizeof(mi) };

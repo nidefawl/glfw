@@ -368,6 +368,8 @@ static LRESULT CALLBACK helperWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
+// extern const WCHAR* glfwWin32WindowClassName;
+
 // Creates a dummy window for behind-the-scenes work
 //
 static GLFWbool createHelperWindow(void)
@@ -379,6 +381,7 @@ static GLFWbool createHelperWindow(void)
     wc.lpfnWndProc   = (WNDPROC) helperWindowProc;
     wc.hInstance     = _glfw.win32.instance;
     wc.lpszClassName = L"GLFW3 Helper";
+    // wc.lpszClassName = glfwWin32WindowClassName;
 
     _glfw.win32.helperWindowClass = RegisterClassExW(&wc);
     if (!_glfw.win32.helperWindowClass)
@@ -681,10 +684,6 @@ GLFWbool _glfwConnectWin32(int platformID, _GLFWplatform* platform)
 
     *platform = win32;
     return GLFW_TRUE;
-}
-
-GLFWAPI void glfwSetWin32WindowClassName(const WCHAR* windowClassName) {
-  _glfw.win32.windowClassName = windowClassName;
 }
 
 int _glfwInitWin32(void)

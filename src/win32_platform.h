@@ -458,8 +458,6 @@ typedef struct _GLFWlibraryWin32
     int                 rawInputSize;
     UINT                mouseTrailSize;
 
-    const WCHAR*        windowClassName;
-
     struct {
         HINSTANCE                       instance;
         PFN_DirectInput8Create          Create;
