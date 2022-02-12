@@ -43,11 +43,15 @@ static DWORD getWindowStyle(const _GLFWwindow* window)
 {
     DWORD style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 
- 	  if (window->isChild)
-   		style = WS_CHILD;
-    else if (window->monitor)
+    if (window->isChild)
+	{
+        style = WS_CHILD;
+    }
+	else if (window->monitor)
+	{
         style |= WS_POPUP;
-    else
+    }
+	else
     {
         style |= WS_SYSMENU | WS_MINIMIZEBOX;
 
@@ -1381,7 +1385,7 @@ static int createNativeWindow(_GLFWwindow* window,
     window->win32.scaleToMonitor = wndconfig->scaleToMonitor;
     window->win32.keymenu = wndconfig->win32.keymenu;
 
-    if (!window->monitor)
+    if (!window->monitor && !window->isChild)
     {
         RECT rect = { 0, 0, wndconfig->width, wndconfig->height };
         WINDOWPLACEMENT wp = { sizeof(wp) };
