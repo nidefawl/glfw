@@ -1334,6 +1334,9 @@ extern "C" {
 #define GLFW_PLATFORM_NULL          0x00060005
 /*! @} */
 
+
+#define GLFW_CONTEXT_KEEPCURRENT    0x87008700
+
 #define GLFW_DONT_CARE              -1
 
 

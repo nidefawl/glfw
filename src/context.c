@@ -622,6 +622,12 @@ GLFWAPI void glfwMakeContextCurrent(GLFWwindow* handle)
 
     previous = _glfwPlatformGetTls(&_glfw.contextSlot);
 
+    if (_glfw.hints.init.keepCurrentContext) {
+      if (window == previous) {
+        return;
+      }
+    }
+
     if (window && window->context.client == GLFW_NO_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT,

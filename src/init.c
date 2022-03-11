@@ -464,6 +464,9 @@ GLFWAPI void glfwInitHint(int hint, int value)
 {
     switch (hint)
     {
+        case GLFW_CONTEXT_KEEPCURRENT:
+            _glfwInitHints.keepCurrentContext = value;
+            return;
         case GLFW_JOYSTICK_HAT_BUTTONS:
             _glfwInitHints.hatButtons = value;
             return;

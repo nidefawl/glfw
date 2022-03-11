@@ -382,6 +382,7 @@ struct _GLFWinitconfig
     struct {
         int       libdecorMode;
     } wl;
+    GLFWbool      keepCurrentContext;
 };
 
 // Window configuration
