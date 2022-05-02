@@ -245,7 +245,8 @@ GLFWAPI GLFWwindow* glfwCreateWindowWithConfig(int width, int height,
     window->mousePassthrough = wndconfig.mousePassthrough;
     window->cursorMode       = GLFW_CURSOR_NORMAL;
     window->isChild = wndconfig.parentHandle != NULL;
-    window->isAlwaysFocused = GLFW_TRUE;
+    window->isAlwaysFocused  = GLFW_TRUE;
+    window->hideFromTaskbar  = wndconfig.hideFromTaskbar;
 
     window->doublebuffer = fbconfig.doublebuffer;
 
@@ -422,6 +423,9 @@ GLFWAPI void glfwWindowHint(int hint, int value)
             return;
         case GLFW_FOCUS_ON_SHOW:
             _glfw.hints.window.focusOnShow = value ? GLFW_TRUE : GLFW_FALSE;
+            return;
+        case GLFW_HIDE_FROM_TASKBAR:
+            _glfw.hints.window.hideFromTaskbar = value ? GLFW_TRUE : GLFW_FALSE;
             return;
         case GLFW_MOUSE_PASSTHROUGH:
             _glfw.hints.window.mousePassthrough = value ? GLFW_TRUE : GLFW_FALSE;
@@ -930,7 +934,9 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
         case GLFW_CONTEXT_RELEASE_BEHAVIOR:
             return window->context.release;
         case GLFW_CONTEXT_NO_ERROR:
-            return window->context.noerror;
+            return window->context.noerror;;
+        case GLFW_HIDE_FROM_TASKBAR:
+            return window->hideFromTaskbar;
     }
 
     _glfwInputError(GLFW_INVALID_ENUM, "Invalid window attribute 0x%08X", attrib);

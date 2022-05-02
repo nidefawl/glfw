@@ -409,6 +409,7 @@ struct _GLFWwndconfig
     GLFWbool      focusOnShow;
     GLFWbool      mousePassthrough;
     GLFWbool      scaleToMonitor;
+    GLFWbool      hideFromTaskbar;
     struct {
         GLFWbool  retina;
         char      frameName[256];
@@ -542,6 +543,7 @@ struct _GLFWwindow
     _GLFWcursor*        cursor;
     GLFWbool            isChild;
     GLFWbool            isAlwaysFocused;
+    GLFWbool            hideFromTaskbar;
 
     int                 minwidth, minheight;
     int                 maxwidth, maxheight;

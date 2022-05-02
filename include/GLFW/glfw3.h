@@ -1336,6 +1336,7 @@ extern "C" {
 
 
 #define GLFW_CONTEXT_KEEPCURRENT    0x87008700
+#define GLFW_HIDE_FROM_TASKBAR      0x87008701
 
 #define GLFW_DONT_CARE              -1
 

@@ -633,13 +633,20 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
 
     if (_glfw.x11.NET_WM_STATE && !window->monitor)
     {
-        Atom states[3];
+        Atom states[5];
         int count = 0;
 
         if (wndconfig->floating)
         {
             if (_glfw.x11.NET_WM_STATE_ABOVE)
                 states[count++] = _glfw.x11.NET_WM_STATE_ABOVE;
+        }
+        
+        if (window->hideFromTaskbar) {
+            if (_glfw.x11.NET_WM_STATE_SKIP_TASKBAR && _glfw.x11.NET_WM_STATE_SKIP_PAGER) {
+                states[count++] = _glfw.x11.NET_WM_STATE_SKIP_PAGER;
+                states[count++] = _glfw.x11.NET_WM_STATE_SKIP_TASKBAR;
+            }
         }
 
         if (wndconfig->maximized)
@@ -683,13 +690,21 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
                         (unsigned char*) &pid, 1);
     }
 
-    if (_glfw.x11.NET_WM_WINDOW_TYPE && _glfw.x11.NET_WM_WINDOW_TYPE_NORMAL)
+    if (_glfw.x11.NET_WM_WINDOW_TYPE)
     {
         Atom type = _glfw.x11.NET_WM_WINDOW_TYPE_NORMAL;
-        XChangeProperty(_glfw.x11.display,  window->x11.handle,
+        if (_glfw.x11.NET_WM_WINDOW_TYPE_MENU && window->hideFromTaskbar)
+        {
+            type = _glfw.x11.NET_WM_WINDOW_TYPE_MENU;
+        }
+        XChangeProperty(_glfw.x11.display, window->x11.handle,
                         _glfw.x11.NET_WM_WINDOW_TYPE, XA_ATOM, 32,
                         PropModeReplace, (unsigned char*) &type, 1);
     }
+
+    // if (wndconfig->parentHandle && window->hideFromTaskbar) {
+    //     XSetTransientForHint(_glfw.x11.display, window->x11.handle, (Window) wndconfig->parentHandle);
+    // }
 
     // Set ICCCM WM_HINTS property
     {
