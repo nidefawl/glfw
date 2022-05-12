@@ -603,8 +603,11 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
     _glfwGrabErrorHandlerX11();
 
     window->x11.parent = _glfw.x11.root;
+    if (wndconfig->parentHandle) {
+        window->x11.parent = (Window) wndconfig->parentHandle;
+    }
     window->x11.handle = XCreateWindow(_glfw.x11.display,
-                                       _glfw.x11.root,
+                                       window->x11.parent,
                                        xpos, ypos,
                                        width, height,
                                        0,      // Border width
