@@ -542,7 +542,6 @@ struct _GLFWwindow
     _GLFWmonitor*       monitor;
     _GLFWcursor*        cursor;
     GLFWbool            isChild;
-    GLFWbool            isAlwaysFocused;
     GLFWbool            hideFromTaskbar;
 
     int                 minwidth, minheight;

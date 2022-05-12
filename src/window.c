@@ -244,8 +244,7 @@ GLFWAPI GLFWwindow* glfwCreateWindowWithConfig(int width, int height,
     window->focusOnShow      = wndconfig.focusOnShow;
     window->mousePassthrough = wndconfig.mousePassthrough;
     window->cursorMode       = GLFW_CURSOR_NORMAL;
-    window->isChild = wndconfig.parentHandle != NULL;
-    window->isAlwaysFocused  = GLFW_TRUE;
+    window->isChild          = wndconfig.parentHandle != NULL;
     window->hideFromTaskbar  = wndconfig.hideFromTaskbar;
 
     window->doublebuffer = fbconfig.doublebuffer;

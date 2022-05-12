@@ -2879,7 +2879,7 @@ void _glfwSetCursorPosX11(_GLFWwindow* window, double x, double y)
 
 void _glfwSetCursorModeX11(_GLFWwindow* window, int mode)
 {
-    if (_glfwWindowFocusedX11(window))
+    if (window->isChild || _glfwWindowFocusedX11(window))
     {
         if (mode == GLFW_CURSOR_DISABLED)
         {

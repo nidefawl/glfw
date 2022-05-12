@@ -2186,7 +2186,7 @@ void _glfwSetCursorPosWin32(_GLFWwindow* window, double xpos, double ypos)
 
 void _glfwSetCursorModeWin32(_GLFWwindow* window, int mode)
 {
-    if (window->isAlwaysFocused || _glfwWindowFocusedWin32(window))
+    if (window->isChild || _glfwWindowFocusedWin32(window))
     {
         if (mode == GLFW_CURSOR_DISABLED)
         {

@@ -1644,7 +1644,7 @@ void _glfwSetCursorModeCocoa(_GLFWwindow* window, int mode)
                         "Cocoa: Captured cursor mode not yet implemented");
     }
 
-    if (_glfwWindowFocusedCocoa(window))
+    if (window->isChild || _glfwWindowFocusedCocoa(window))
         updateCursorMode(window);
 
     } // autoreleasepool
