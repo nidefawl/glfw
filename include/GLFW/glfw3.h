@@ -1335,8 +1335,38 @@ extern "C" {
 /*! @} */
 
 
-#define GLFW_CONTEXT_KEEPCURRENT    0x87008700
-#define GLFW_HIDE_FROM_TASKBAR      0x87008701
+#define GLFW_CONTEXT_KEEPCURRENT    0x77008700
+#define GLFW_HIDE_FROM_TASKBAR      0x77008701
+
+/*! @name Drag drop events
+ *  @{ */
+/*! @brief Cursor entered entering the window.
+ *
+ *  Cursor entered entering the window.
+ *  @ingroup drag-drop
+ */
+#define GLFW_DRAG_ENTER             0x77009000
+/*! @brief Cursor is moving inside the window.
+ *
+ *  Cursor is moving inside the window.
+ *  @ingroup drag-drop
+ */
+#define GLFW_DRAG_MOVE              0x77009002
+/*! @brief Cursor has been released inside the window.
+ *
+ *  Cursor has been released inside the window.
+ *  @ingroup drag-drop
+ */
+#define GLFW_DRAG_DROP              0x77009003
+/*! @brief The drag operation has been cancelled
+ *
+ *  The drag operation has been cancelled.
+ *  @ingroup drag-drop
+ */
+#define GLFW_DRAG_CANCEL            0x77009004
+ 
+/*! @} */
+
 
 #define GLFW_DONT_CARE              -1
 
@@ -1924,6 +1954,7 @@ typedef void (* GLFWcharmodsfun)(GLFWwindow* window, unsigned int codepoint, int
  *  @param[in] window The window that received the event.
  *  @param[in] path_count The number of dropped paths.
  *  @param[in] paths The UTF-8 encoded file and/or directory path names.
+ *  @param[in] event GLFW_DRAG_MOVE.`GLFW_DRAG_ENTER`, `GLFW_DRAG_LEAVE`, `GLFW_DRAG_MOVE`, `GLFW_DRAG_DROP` or `GLFW_DRAG_CANCEL`.
  *
  *  @pointer_lifetime The path array and its strings are valid until the
  *  callback function returns.
@@ -1935,7 +1966,7 @@ typedef void (* GLFWcharmodsfun)(GLFWwindow* window, unsigned int codepoint, int
  *
  *  @ingroup input
  */
-typedef void (* GLFWdropfun)(GLFWwindow* window, int path_count, const char* paths[]);
+typedef void (* GLFWdropfun)(GLFWwindow* window, int path_count, const char* paths[], int event);
 
 /*! @brief The function pointer type for monitor configuration callbacks.
  *

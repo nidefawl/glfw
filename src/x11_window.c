@@ -1589,8 +1589,17 @@ static void processEvent(XEvent *event)
                                &reply);
                 }
             }
+            else if (event->xclient.message_type == _glfw.x11.XdndLeave)
+            {
+                if (_glfw.x11.xdnd.dragEvent)
+                {
+                    _glfw.x11.xdnd.dragEvent = 0;
+                    _glfwInputDrop(window, 0, NULL, GLFW_DRAG_CANCEL);
+                }
+            }
             else if (event->xclient.message_type == _glfw.x11.XdndEnter)
             {
+                puts("XdndEnter");
                 // A drag operation has entered the window
                 unsigned long count;
                 Atom* formats = NULL;
@@ -1599,6 +1608,7 @@ static void processEvent(XEvent *event)
                 _glfw.x11.xdnd.source  = event->xclient.data.l[0];
                 _glfw.x11.xdnd.version = event->xclient.data.l[1] >> 24;
                 _glfw.x11.xdnd.format  = None;
+                _glfw.x11.xdnd.dragEvent = GLFW_DRAG_ENTER;
 
                 if (_glfw.x11.xdnd.version > _GLFW_XDND_VERSION)
                     return;
@@ -1627,6 +1637,16 @@ static void processEvent(XEvent *event)
 
                 if (list && formats)
                     XFree(formats);
+                if (_glfw.x11.xdnd.format != None && _glfw.x11.xdnd.version <= _GLFW_XDND_VERSION) {
+                    Time time = CurrentTime;
+                    // Request the chosen format from the source window
+                    XConvertSelection(_glfw.x11.display,
+                                      _glfw.x11.XdndSelection,
+                                      _glfw.x11.xdnd.format,
+                                      _glfw.x11.XdndSelection,
+                                      window->x11.handle,
+                                      time);
+                }
             }
             else if (event->xclient.message_type == _glfw.x11.XdndDrop)
             {
@@ -1635,6 +1655,9 @@ static void processEvent(XEvent *event)
 
                 if (_glfw.x11.xdnd.version > _GLFW_XDND_VERSION)
                     return;
+                if (_glfw.x11.xdnd.dragEvent) {
+                    _glfw.x11.xdnd.dragEvent = GLFW_DRAG_DROP;
+                }
 
                 if (_glfw.x11.xdnd.format)
                 {
@@ -1683,6 +1706,9 @@ static void processEvent(XEvent *event)
                                       &dummy);
 
                 _glfwInputCursorPos(window, xpos, ypos);
+                if (_glfw.x11.xdnd.dragEvent > GLFW_DRAG_ENTER) {
+                    _glfwInputDrop(window, 0, NULL, GLFW_DRAG_MOVE);
+                }
 
                 XEvent reply = { ClientMessage };
                 reply.xclient.window = _glfw.x11.xdnd.source;
@@ -1697,7 +1723,7 @@ static void processEvent(XEvent *event)
                     // Reply that we are ready to copy the dragged data
                     reply.xclient.data.l[1] = 1; // Accept with no rectangle
                     if (_glfw.x11.xdnd.version >= 2)
-                        reply.xclient.data.l[4] = _glfw.x11.XdndActionCopy;
+                        reply.xclient.data.l[4] = _glfw.x11.XdndActionPrivate;
                 }
 
                 XSendEvent(_glfw.x11.display, _glfw.x11.xdnd.source,
@@ -1725,7 +1751,11 @@ static void processEvent(XEvent *event)
                     int count;
                     char** paths = _glfwParseUriList(data, &count);
 
-                    _glfwInputDrop(window, count, (const char**) paths);
+                    if (_glfw.x11.xdnd.dragEvent) {
+                        _glfwInputDrop(window, count, (const char**) paths, _glfw.x11.xdnd.dragEvent);
+                        if (_glfw.x11.xdnd.dragEvent == GLFW_DRAG_ENTER)
+                            _glfw.x11.xdnd.dragEvent = GLFW_DRAG_MOVE;
+                    }
 
                     for (int i = 0;  i < count;  i++)
                         _glfw_free(paths[i]);
@@ -1735,7 +1765,7 @@ static void processEvent(XEvent *event)
                 if (data)
                     XFree(data);
 
-                if (_glfw.x11.xdnd.version >= 2)
+                if (_glfw.x11.xdnd.version >= 2 && (_glfw.x11.xdnd.dragEvent != GLFW_DRAG_MOVE && _glfw.x11.xdnd.dragEvent != GLFW_DRAG_ENTER))
                 {
                     XEvent reply = { ClientMessage };
                     reply.xclient.window = _glfw.x11.xdnd.source;
@@ -1743,11 +1773,12 @@ static void processEvent(XEvent *event)
                     reply.xclient.format = 32;
                     reply.xclient.data.l[0] = window->x11.handle;
                     reply.xclient.data.l[1] = result;
-                    reply.xclient.data.l[2] = _glfw.x11.XdndActionCopy;
+                    reply.xclient.data.l[2] = _glfw.x11.XdndActionPrivate;
 
                     XSendEvent(_glfw.x11.display, _glfw.x11.xdnd.source,
                                False, NoEventMask, &reply);
                     XFlush(_glfw.x11.display);
+                    _glfw.x11.xdnd.dragEvent = 0;
                 }
             }
 

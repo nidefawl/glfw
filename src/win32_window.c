@@ -1239,7 +1239,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                 _glfw_free(buffer);
             }
 
-            _glfwInputDrop(window, count, (const char**) paths);
+            _glfwInputDrop(window, count, (const char**) paths, GLFW_DRAG_DROP);
 
             for (i = 0;  i < count;  i++)
                 _glfw_free(paths[i]);

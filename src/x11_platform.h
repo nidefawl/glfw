@@ -626,7 +626,9 @@ typedef struct _GLFWlibraryX11
     Atom            XdndPosition;
     Atom            XdndStatus;
     Atom            XdndActionCopy;
+    Atom            XdndActionPrivate;
     Atom            XdndDrop;
+    Atom            XdndLeave;
     Atom            XdndFinished;
     Atom            XdndSelection;
     Atom            XdndTypeList;
@@ -804,6 +806,7 @@ typedef struct _GLFWlibraryX11
         int         version;
         Window      source;
         Atom        format;
+        int         dragEvent;
     } xdnd;
 
     struct {
