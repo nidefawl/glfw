@@ -1242,7 +1242,17 @@ static void processEvent(XEvent *event)
     }
 
     _GLFWwindow* window = NULL;
-    if (XFindContext(_glfw.x11.display,
+    
+    switch(event->type) {
+    case ButtonRelease:
+        window = _glfw.x11.disabledCursorWindow;
+        break;
+    default:
+        break;
+    }
+    
+
+    if (!window && XFindContext(_glfw.x11.display,
                      event->xany.window,
                      _glfw.x11.context,
                      (XPointer*) &window) != 0)
@@ -1456,10 +1466,12 @@ static void processEvent(XEvent *event)
                 updateCursorImage(window);
 
             _glfwInputCursorEnter(window, GLFW_TRUE);
-            _glfwInputCursorPos(window, x, y);
+            if (window->cursorMode != GLFW_CURSOR_DISABLED) {
+                _glfwInputCursorPos(window, x, y);
+                window->x11.lastCursorPosX = x;
+                window->x11.lastCursorPosY = y;
+            }
 
-            window->x11.lastCursorPosX = x;
-            window->x11.lastCursorPosY = y;
             return;
         }
 
@@ -1599,7 +1611,6 @@ static void processEvent(XEvent *event)
             }
             else if (event->xclient.message_type == _glfw.x11.XdndEnter)
             {
-                puts("XdndEnter");
                 // A drag operation has entered the window
                 unsigned long count;
                 Atom* formats = NULL;
