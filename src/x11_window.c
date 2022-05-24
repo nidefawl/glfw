@@ -2491,7 +2491,8 @@ void _glfwShowWindowX11(_GLFWwindow* window)
         return;
 
     XMapWindow(_glfw.x11.display, window->x11.handle);
-    waitForVisibilityNotify(window);
+    if (!window->isChild)
+        waitForVisibilityNotify(window);
 }
 
 void _glfwHideWindowX11(_GLFWwindow* window)
