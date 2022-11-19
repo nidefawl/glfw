@@ -26,6 +26,7 @@
 // It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
+#include "GLFW/glfw3.h"
 #include "internal.h"
 
 #if defined(_GLFW_COCOA)
@@ -617,6 +618,34 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     return NSDragOperationGeneric;
 }
 
+- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
+{
+    const NSRect contentRect = [window->ns.view frame];
+    // NOTE: The returned location uses base 0,1 not 0,0
+    const NSPoint pos = [sender draggingLocation];
+    _glfwInputCursorPos(window, pos.x, contentRect.size.height - pos.y);
+
+    NSPasteboard* pasteboard = [sender draggingPasteboard];
+    NSDictionary* options = @{NSPasteboardURLReadingFileURLsOnlyKey:@YES};
+    NSArray* urls = [pasteboard readObjectsForClasses:@[[NSURL class]]
+                                              options:options];
+    const NSUInteger count = [urls count];
+    if (count)
+    {
+        char** paths = _glfw_calloc(count, sizeof(char*));
+
+        for (NSUInteger i = 0;  i < count;  i++)
+            paths[i] = _glfw_strdup([urls[i] fileSystemRepresentation]);
+
+        _glfwInputDrop(window, (int) count, (const char**) paths, GLFW_DRAG_ENTER);
+
+        for (NSUInteger i = 0;  i < count;  i++)
+            _glfw_free(paths[i]);
+        _glfw_free(paths);
+    }
+
+    return YES;
+}
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
     const NSRect contentRect = [window->ns.view frame];
@@ -636,7 +665,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         for (NSUInteger i = 0;  i < count;  i++)
             paths[i] = _glfw_strdup([urls[i] fileSystemRepresentation]);
 
-        _glfwInputDrop(window, (int) count, (const char**) paths);
+        _glfwInputDrop(window, (int) count, (const char**) paths, GLFW_DRAG_MOVE);
 
         for (NSUInteger i = 0;  i < count;  i++)
             _glfw_free(paths[i]);
@@ -644,6 +673,36 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     }
 
     return YES;
+}
+- (void)concludeDragOperation:(nullable id <NSDraggingInfo>)sender
+{
+    if (!sender) {
+        _glfwInputDrop(window, (int) 0, (const char**) NULL, GLFW_DRAG_CANCEL);
+        return;
+    }
+    const NSRect contentRect = [window->ns.view frame];
+    // NOTE: The returned location uses base 0,1 not 0,0
+    const NSPoint pos = [sender draggingLocation];
+    _glfwInputCursorPos(window, pos.x, contentRect.size.height - pos.y);
+
+    NSPasteboard* pasteboard = [sender draggingPasteboard];
+    NSDictionary* options = @{NSPasteboardURLReadingFileURLsOnlyKey:@YES};
+    NSArray* urls = [pasteboard readObjectsForClasses:@[[NSURL class]]
+                                              options:options];
+    const NSUInteger count = [urls count];
+    if (count)
+    {
+        char** paths = _glfw_calloc(count, sizeof(char*));
+
+        for (NSUInteger i = 0;  i < count;  i++)
+            paths[i] = _glfw_strdup([urls[i] fileSystemRepresentation]);
+
+        _glfwInputDrop(window, (int) count, (const char**) paths, GLFW_DRAG_DROP);
+
+        for (NSUInteger i = 0;  i < count;  i++)
+            _glfw_free(paths[i]);
+        _glfw_free(paths);
+    }
 }
 
 - (BOOL)hasMarkedText
