@@ -262,6 +262,12 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         window->ns.height = contentRect.size.height;
         _glfwInputWindowSize(window, contentRect.size.width, contentRect.size.height);
     }
+    const NSRect contentRectPost =
+        [window->ns.object contentRectForFrameRect:[window->ns.object frame]];
+    for (NSWindow *child in [window->ns.object childWindows]) {
+        [child setFrameOrigin:contentRectPost.origin];
+        [child setContentSize:contentRectPost.size];
+    }
 }
 
 - (void)windowDidMove:(NSNotification *)notification
@@ -275,6 +281,12 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     int x, y;
     _glfwGetWindowPosCocoa(window, &x, &y);
     _glfwInputWindowPos(window, x, y);
+    const NSRect contentRect =
+        [window->ns.object contentRectForFrameRect:[window->ns.object frame]];
+    for (NSWindow *child in [window->ns.object childWindows]) {
+        [child setFrameOrigin:contentRect.origin];
+        [child setContentSize:contentRect.size];
+    }
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification
@@ -852,23 +864,14 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
         contentRect = NSMakeRect(xpos, ypos, mode.width, mode.height);
     }
     else
-    {
-        if (wndconfig->xpos == GLFW_ANY_POSITION ||
-            wndconfig->ypos == GLFW_ANY_POSITION)
-        {
-            contentRect = NSMakeRect(0, 0, wndconfig->width, wndconfig->height);
-        }
-        else
-        {
-            const int xpos = wndconfig->xpos;
-            const int ypos = _glfwTransformYCocoa(wndconfig->ypos + wndconfig->height - 1);
-            contentRect = NSMakeRect(xpos, ypos, wndconfig->width, wndconfig->height);
-        }
-    }
+        contentRect = NSMakeRect(0, 0, wndconfig->width, wndconfig->height);
 
     NSUInteger styleMask = NSWindowStyleMaskMiniaturizable;
-
-    if (window->monitor || !window->decorated)
+    if (window->isChild)
+	  {
+        styleMask = NSWindowStyleMaskBorderless;
+    }
+    else if (window->monitor || !window->decorated)
         styleMask |= NSWindowStyleMaskBorderless;
     else
     {
@@ -878,6 +881,12 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
             styleMask |= NSWindowStyleMaskResizable;
     }
 
+    id parentWindow = nil;
+    if (wndconfig->parentHandle)
+    {
+        parentWindow = (__bridge id) wndconfig->parentHandle;
+        contentRect = [parentWindow contentRectForFrameRect:[parentWindow frame]];
+    }
     window->ns.object = [[GLFWWindow alloc]
         initWithContentRect:contentRect
                   styleMask:styleMask
@@ -935,6 +944,14 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
         [window->ns.object setOpaque:NO];
         [window->ns.object setHasShadow:NO];
         [window->ns.object setBackgroundColor:[NSColor clearColor]];
+    }
+
+    if (parentWindow != nil)
+    {
+        [parentWindow addChildWindow:window->ns.object ordered:NSWindowAbove];
+        // [window->ns.object orderWindow:NSWindowAbove relativeTo:[parentWindow windowNumber]];
+        [window->ns.object setFrameOrigin:contentRect.origin];
+        [window->ns.object setContentSize:contentRect.size];
     }
 
     [window->ns.object setContentView:window->ns.view];
@@ -1426,7 +1443,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
 GLFWbool _glfwWindowFocusedCocoa(_GLFWwindow* window)
 {
     @autoreleasepool {
-    return [window->ns.object isKeyWindow];
+    return window->isChild || [window->ns.object isKeyWindow];
     } // autoreleasepool
 }
 
@@ -1703,7 +1720,7 @@ void _glfwSetCursorModeCocoa(_GLFWwindow* window, int mode)
                         "Cocoa: Captured cursor mode not yet implemented");
     }
 
-    if (window->isChild || _glfwWindowFocusedCocoa(window))
+    if (_glfwWindowFocusedCocoa(window))
         updateCursorMode(window);
 
     } // autoreleasepool
