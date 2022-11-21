@@ -2125,5 +2125,20 @@ GLFWAPI id glfwGetCocoaWindow(GLFWwindow* handle)
     return window->ns.object;
 }
 
-#endif // _GLFW_COCOA
 
+GLFWAPI id glfwGetCocoaNSView(GLFWwindow* handle)
+{
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(nil);
+
+    if (_glfw.platform.platformID != GLFW_PLATFORM_COCOA)
+    {
+        _glfwInputError(GLFW_PLATFORM_UNAVAILABLE,
+                        "Cocoa: Platform not initialized");
+        return NULL;
+    }
+
+    return window->ns.view;
+}
+
+#endif // _GLFW_COCOA
