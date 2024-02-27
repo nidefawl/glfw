@@ -1939,6 +1939,28 @@ static const struct wl_data_offer_listener dataOfferListener =
     dataOfferHandleOffer
 };
 
+static void fireGlfwInputDropEvent(int event) {
+    if (!_glfw.wl.dragOffer)
+        return;
+
+    char* string = readDataOfferAsString(_glfw.wl.dragOffer, "text/uri-list");
+    if (string)
+    {
+        int count;
+        char** paths = _glfwParseUriList(string, &count);
+        if (paths)
+            _glfwInputDrop(_glfw.wl.dragFocus, count, (const char**) paths, event);
+
+        for (int i = 0; i < count; i++)
+            _glfw_free(paths[i]);
+
+        _glfw_free(paths);
+    }
+
+    _glfw_free(string);
+}
+
+
 static void dataDeviceHandleDataOffer(void* userData,
                                       struct wl_data_device* device,
                                       struct wl_data_offer* offer)
@@ -2009,6 +2031,7 @@ static void dataDeviceHandleEnter(void* userData,
         wl_data_offer_accept(offer, serial, NULL);
         wl_data_offer_destroy(offer);
     }
+    fireGlfwInputDropEvent(GLFW_DRAG_ENTER);
 }
 
 static void dataDeviceHandleLeave(void* userData,
@@ -2020,6 +2043,7 @@ static void dataDeviceHandleLeave(void* userData,
         _glfw.wl.dragOffer = NULL;
         _glfw.wl.dragFocus = NULL;
     }
+    fireGlfwInputDropEvent(GLFW_DRAG_CANCEL);
 }
 
 static void dataDeviceHandleMotion(void* userData,
@@ -2028,29 +2052,13 @@ static void dataDeviceHandleMotion(void* userData,
                                    wl_fixed_t x,
                                    wl_fixed_t y)
 {
+    fireGlfwInputDropEvent(GLFW_DRAG_MOVE);
 }
 
 static void dataDeviceHandleDrop(void* userData,
                                  struct wl_data_device* device)
 {
-    if (!_glfw.wl.dragOffer)
-        return;
-
-    char* string = readDataOfferAsString(_glfw.wl.dragOffer, "text/uri-list");
-    if (string)
-    {
-        int count;
-        char** paths = _glfwParseUriList(string, &count);
-        if (paths)
-            _glfwInputDrop(_glfw.wl.dragFocus, count, (const char**) paths);
-
-        for (int i = 0; i < count; i++)
-            _glfw_free(paths[i]);
-
-        _glfw_free(paths);
-    }
-
-    _glfw_free(string);
+    fireGlfwInputDropEvent(GLFW_DRAG_DROP);
 }
 
 static void dataDeviceHandleSelection(void* userData,
