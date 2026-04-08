@@ -404,8 +404,7 @@ void _glfwInputCursorEnter(_GLFWwindow* window, GLFWbool entered)
 void _glfwInputDrop(_GLFWwindow* window, int count, const char** paths, int event)
 {
     assert(window != NULL);
-    assert(count > 0);
-    assert(paths != NULL);
+    assert((count > 0 && paths != NULL) || (count == 0 && paths == NULL));
 
     if (window->callbacks.drop)
         window->callbacks.drop((GLFWwindow*) window, count, paths, event);
